@@ -11,7 +11,7 @@ app.use(express.json());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
-const uri =`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mjmwf3r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mjmwf3r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -734,32 +734,73 @@ async function run() {
       }
     });
 
-    // PATCH: Admin updates application status
+    // PATCH: Admin updates application status // old update funtionilitys
+    // app.patch("/applications/:id/status", verifyToken, async (req, res) => {
+    //   const { id } = req.params;
+    //   const { status } = req.body;
+
+    //   const validStatuses = ["pending", "reviewed", "selected", "rejected"];
+    //   if (!status || !validStatuses.includes(status)) {
+    //     return res.status(400).json({ error: "Invalid or missing status" });
+    //   }
+
+    //   try {
+    //     const result = await applicationsCollection.updateOne(
+    //       { _id: new ObjectId(id) },
+    //       { $set: { status } }
+    //     );
+
+    //     if (result.matchedCount === 0) {
+    //       return res.status(404).json({ error: "Application not found" });
+    //     }
+
+    //     res.json({ success: true, message: `Status updated to \"${status}\"` });
+    //   } catch (error) {
+    //     console.error("Error updating application status:", error);
+    //     res.status(500).json({ error: "Server error" });
+    //   }
+    // });
+
+    // PATCH update application status  // latest update funtionilitys
     app.patch("/applications/:id/status", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { status } = req.body;
 
-      const validStatuses = ["pending", "reviewed", "selected", "rejected"];
-      if (!status || !validStatuses.includes(status)) {
-        return res.status(400).json({ error: "Invalid or missing status" });
-      }
-
       try {
-        const result = await applicationsCollection.updateOne(
+        // Find the application first
+        const application = await applicationsCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!application) {
+          return res.status(404).json({ error: "Application not found" });
+        }
+
+        const jobId = application.jobId;
+
+        // 1. Update this application
+        await applicationsCollection.updateOne(
           { _id: new ObjectId(id) },
           { $set: { status } }
         );
 
-        if (result.matchedCount === 0) {
-          return res.status(404).json({ error: "Application not found" });
+        // 2. If status is "selected"
+        if (status === "selected") {
+          await applicationsCollection.updateMany(
+            {
+              jobId: jobId,
+              _id: { $ne: new ObjectId(id) }, // exclude selected person
+              status: { $ne: "reviewed" } // keep shortlisted as is
+            },
+            { $set: { status: "rejected" } }
+          );
         }
 
-        res.json({ success: true, message: `Status updated to \"${status}\"` });
+        res.json({ success: true, message: "Status updated successfully" });
       } catch (error) {
-        console.error("Error updating application status:", error);
+        console.error("Error updating status:", error);
         res.status(500).json({ error: "Server error" });
       }
     });
+
 
     // GET: Get all applications with user and job info for admin
     app.get("/applications", verifyToken, async (req, res) => {
