@@ -678,9 +678,9 @@ async function run() {
     app.put("/applications/:id", async (req, res) => {
       try {
         const { id } = req.params;
-        const { reason, comments } = req.body;
+        const { reason, comments,  } = req.body;
 
-        if (!["Pending", "Cancel"].includes(reason)) {
+        if (!["Pending", "Cancel", "Appointed"].includes(reason)) {
           return res.status(400).send({ success: false, error: "Invalid reason" });
         }
 
