@@ -675,6 +675,36 @@ async function run() {
       res.send({ success: true, insertedId: result.insertedId });
     });
 
+    app.put("/applications/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { reason, comments } = req.body;
+
+        if (!["Pending", "Cancel"].includes(reason)) {
+          return res.status(400).send({ success: false, error: "Invalid reason" });
+        }
+
+        const result = await jobsCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              status: reason,
+              feedback: comments,
+              updatedAt: new Date()
+            }
+          }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ success: false, error: "Job not found" });
+        }
+
+        res.send({ success: true, updatedFields: { status: reason, feedback: comments } });
+      } catch (error) {
+        res.status(500).send({ success: false, error: error.message });
+      }
+    });
+
     // GET: Check if a user has applied for a job
     app.get("/applications/check", verifyToken, async (req, res) => {
       const { jobId, userId } = req.query;
