@@ -11,7 +11,12 @@ app.use(express.json());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mjmwf3r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+//on old data base api
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mjmwf3r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+
+//o current data base api
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lb3rxqj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -34,7 +39,7 @@ async function run() {
     const applicationsCollection = db.collection("applications");
 
     // GET route to fetch all users
-    // app.get("/users", verifyToken, async (req, res) => {
+    // app.get("/users", async (req, res) => {
     //   try {
     //     const allUsers = await usersCollection.find().toArray();
     //     res.send(allUsers);
@@ -44,7 +49,7 @@ async function run() {
     //   }
     // });
 
-    app.get("/users", verifyToken, async (req, res) => {
+    app.get("/users" , verifyToken, async (req, res) => {
       try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
@@ -387,7 +392,7 @@ async function run() {
 
     // tuition get
 
-    app.get("/tuition-requests", verifyToken, async (req, res) => {
+    app.get("/tuition-requests",verifyToken, async (req, res) => {
       try {
         const allRequests = await tuitionRequestsCollection
           .find()
@@ -542,7 +547,7 @@ async function run() {
     //     });
     //   }
     // });
-    app.get("/jobs", async (req, res) => {
+    app.get("/jobs",verifyToken, async (req, res) => {
       try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
@@ -833,7 +838,7 @@ async function run() {
 
 
     // GET: Get all applications with user and job info for admin
-    app.get("/applications", verifyToken, async (req, res) => {
+    app.get("/applications",verifyToken, async (req, res) => {
       try {
         const allApplications = await applicationsCollection
           .aggregate([
