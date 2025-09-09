@@ -11,11 +11,12 @@ app.use(express.json());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
-//on old data base api
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mjmwf3r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
-
 //o current data base api
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lb3rxqj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mjmwf3r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+const uri=process.env.URI
+
+//on old data base api
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lb3rxqj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -533,21 +534,10 @@ async function run() {
 
     // GET all job posts
     // app.get("/jobs", async (req, res) => {
-    //   try {
-    //     const jobs = await jobsCollection.find().sort({ _id: -1 }).toArray();
-    //     res.status(200).send({
-    //       success: true,
-    //       data: jobs,
-    //     });
-    //   } catch (error) {
-    //     console.error("Error fetching jobs:", error);
-    //     res.status(500).send({
-    //       success: false,
-    //       message: "Failed to fetch jobs",
-    //     });
-    //   }
+    //   const jobs = await jobsCollection.find().toArray();
+    //     res.send(jobs);
     // });
-    app.get("/jobs",verifyToken, async (req, res) => {
+    app.get("/jobs", async (req, res) => {
       try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
