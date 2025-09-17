@@ -3,7 +3,7 @@ const express = require("express");
 const app = express();
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 4000;
 
 // middleware
 app.use(cors());
@@ -13,10 +13,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 //o current data base api
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mjmwf3r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
-// const uri=process.env.URI
+const uri=process.env.URI
 
-//on old data base api
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lb3rxqj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -50,7 +48,7 @@ async function run() {
     //   }
     // });
 
-    app.get("/users" , verifyToken, async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
       try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
@@ -393,7 +391,7 @@ async function run() {
 
     // tuition get
 
-    app.get("/tuition-requests",verifyToken, async (req, res) => {
+    app.get("/tuition-requests", verifyToken, async (req, res) => {
       try {
         const allRequests = await tuitionRequestsCollection
           .find()
@@ -533,10 +531,33 @@ async function run() {
     });
 
     // GET all job posts
-    // app.get("/jobs", async (req, res) => {
+    // app.get("/Alljobs", async (req, res) => {
     //   const jobs = await jobsCollection.find().toArray();
     //     res.send(jobs);
     // });
+    // for notifications api
+    // GET recent 6 jobs matching user city
+    app.get("/jobs/notifications/:city", async (req, res) => {
+      try {
+        const userCity = req.params.city;
+        if (!userCity) return res.status(400).send({ success: false, error: "City is required" });
+
+        // Fetch the 6 most recent jobs matching user's city
+        const jobs = await jobsCollection
+          .find({ city: userCity })  // or use regex if partial match: { city: { $regex: userCity, $options: "i" } }
+          .sort({ dateObj: -1 })      // newest first
+          .limit(3)
+          .toArray();
+
+        res.send({ success: true, data: jobs });
+      } catch (error) {
+        console.error("Error fetching job notifications:", error);
+        res.status(500).send({ success: false, error: "Failed to fetch notifications" });
+      }
+    });
+
+
+
     app.get("/jobs", async (req, res) => {
       try {
         const page = parseInt(req.query.page) || 1;
@@ -673,7 +694,7 @@ async function run() {
     app.put("/applications/:id", async (req, res) => {
       try {
         const { id } = req.params;
-        const { reason, comments,  } = req.body;
+        const { reason, comments, } = req.body;
 
         if (!["Pending", "Cancel", "Appointed"].includes(reason)) {
           return res.status(400).send({ success: false, error: "Invalid reason" });
@@ -828,7 +849,7 @@ async function run() {
 
 
     // GET: Get all applications with user and job info for admin
-    app.get("/applications",verifyToken, async (req, res) => {
+    app.get("/applications", verifyToken, async (req, res) => {
       try {
         const allApplications = await applicationsCollection
           .aggregate([
