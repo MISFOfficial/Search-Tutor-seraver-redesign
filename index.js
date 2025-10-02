@@ -152,6 +152,43 @@ async function run() {
         res.status(500).send({ error: "Failed to save user" });
       }
     });
+
+
+    // users skill update
+    app.put("/users/:id/skills", async (req, res) => {
+      const { id } = req.params;
+      const { skills } = req.body;
+
+      console.log("ID:", id);
+      console.log("Skills:", skills);
+
+      if (!Array.isArray(skills)) {
+        return res.status(400).json({ error: "Skills must be an array" });
+      }
+
+      try {
+        const db = client.db("searchTeacherDb");
+        const usersCollection = db.collection("users");
+
+        const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { uid: id };
+
+        const result = await usersCollection.updateOne(
+          query,
+          { $set: { skills } },
+          { upsert: false }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        res.json({ message: "✅ Skills updated successfully", skills });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "❌ Failed to update skills" });
+      }
+    });
+
     // Save a update user
     app.patch("/users/:uid", verifyToken, async (req, res) => {
       try {
@@ -665,6 +702,7 @@ async function run() {
 
     // POST: Apply to a job
 
+
     app.post("/applications", verifyToken, async (req, res) => {
       const { jobId, userId, userEmail } = req.body;
 
@@ -690,6 +728,9 @@ async function run() {
 
       res.send({ success: true, insertedId: result.insertedId });
     });
+
+
+
 
     app.put("/applications/:id", async (req, res) => {
       try {
